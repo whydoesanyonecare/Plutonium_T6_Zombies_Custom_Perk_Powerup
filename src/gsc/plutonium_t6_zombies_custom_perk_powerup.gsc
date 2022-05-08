@@ -1,5 +1,4 @@
 //issues: hint for custom perks cannot be disabled in afterlife perks restore or player wont get any perks back
-
 #include maps/mp/zombies/_zm;
 #include maps/mp/zombies/_zm_perks;
 #include maps/mp/_visionset_mgr;
