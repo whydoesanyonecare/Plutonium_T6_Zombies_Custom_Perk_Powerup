@@ -177,11 +177,7 @@ TrackPerkPowerup()
 
 func_should_drop_limited()
 {
-    if (level.round_number > 10 && isDefined( level.roundsplayed ) && level.roundsplayed < 1 )
-    {
-        return 0;
-    }
-    else if (isDefined( level.roundsplayed ) && level.roundsplayed < 2 )
+    if (isDefined( level.roundsplayed ) && level.roundsplayed < 1 )
     {
         return 0;
     }
