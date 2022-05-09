@@ -1,5 +1,7 @@
 # Plutonium T6 Zombies Custom Perk Powerup
 
+* This script only work in Plutonium because of ReplaceFunc
+
 This script add custom perk powerup to bo2 zombies, custom perks are included in modified version of original perk system.
 
 # Custom Perks:
