@@ -1,4 +1,5 @@
 //issues: hint for custom perks cannot be disabled in afterlife perks restore or player wont get any perks back
+
 #include maps/mp/zombies/_zm;
 #include maps/mp/zombies/_zm_perks;
 #include maps/mp/_visionset_mgr;
@@ -39,10 +40,9 @@ init()
 	level.perk_purchase_limit = 50;
 	level.zombie_last_stand = ::LastStand;
     level.effect_WebFX = loadfx("misc/fx_zombie_powerup_solo_grab");
-    if(getdvar( "mapname ") == "zm_transit" || getdvar( "mapname" ) == "zm_nuked" || getdvar( "mapname" ) == "zm_prison" )
-    {
-        level.get_player_weapon_limit = ::custom_get_player_weapon_limit;
-    }
+
+    level.get_player_weapon_limit = ::custom_get_player_weapon_limit;
+	
     set_zombie_var( "riotshield_hit_points", 1500 );
     if(isDefined(level.player_damage_callbacks[0]))
     {
@@ -177,7 +177,11 @@ TrackPerkPowerup()
 
 func_should_drop_limited()
 {
-    if (isDefined( level.roundsplayed ) && level.roundsplayed < 1 )
+    if (level.round_number > 10 && isDefined( level.roundsplayed ) && level.roundsplayed < 1 )
+    {
+        return 0;
+    }
+    if (level.round_number < 10 && isDefined( level.roundsplayed ) && level.roundsplayed < 2 )
     {
         return 0;
     }
