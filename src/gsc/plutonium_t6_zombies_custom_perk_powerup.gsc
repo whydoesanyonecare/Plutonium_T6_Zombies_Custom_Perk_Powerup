@@ -37,12 +37,12 @@ init()
     {
         precacheshader(shader);
     }
-	level.perk_purchase_limit = 50;
+	
 	level.zombie_last_stand = ::LastStand;
     level.effect_WebFX = loadfx("misc/fx_zombie_powerup_solo_grab");
 
     level.get_player_weapon_limit = ::custom_get_player_weapon_limit;
-	
+
     set_zombie_var( "riotshield_hit_points", 1500 );
     if(isDefined(level.player_damage_callbacks[0]))
     {
@@ -104,6 +104,8 @@ onPlayerConnect()
     {
         level waittill("connected", player);
         player thread onPlayerSpawned();
+		if(isdefined(level.perk_purchase_limit) && level.perk_purchase_limit < 50)
+			level.perk_purchase_limit = 50;
     }
 }
 
