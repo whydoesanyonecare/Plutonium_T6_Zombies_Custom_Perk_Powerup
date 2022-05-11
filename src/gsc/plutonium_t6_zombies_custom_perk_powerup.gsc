@@ -24,7 +24,6 @@
 init()
 {
 	level.background_shader = getdvarintdefault("enable_background", 1);
-
     level thread onPlayerConnect();
     level thread TrackPerkPowerup();
     isTown(); //tombstone fix 
