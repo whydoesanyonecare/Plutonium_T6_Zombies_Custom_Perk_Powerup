@@ -1,26 +1,26 @@
 //issues: hint for custom perks cannot be disabled in afterlife perks restore or player wont get any perks back
 
-#include maps/mp/zombies/_zm;
-#include maps/mp/zombies/_zm_perks;
-#include maps/mp/_visionset_mgr;
-#include maps/mp/zombies/_zm_score;
-#include maps/mp/zombies/_zm_stats;
-#include maps/mp/_demo;
-#include maps/mp/zombies/_zm_audio;
-#include maps/mp/zombies/_zm_pers_upgrades_functions;
-#include maps/mp/zombies/_zm_power;
-#include maps/mp/zombies/_zm_laststand;
-#include maps/mp/zombies/_zm_weapons;
-#include maps/mp/zombies/_zm_utility;
-#include maps/mp/_utility;
+#include maps\mp\zombies\_zm;
+#include maps\mp\zombies\_zm_perks;
+#include maps\mp\_visionset_mgr;
+#include maps\mp\zombies\_zm_score;
 #include maps\mp\zombies\_zm_stats;
-#include common_scripts/utility;
-#include maps/mp/zombies/_zm_powerups;
-#include maps/mp/zombies/_zm_chugabud;
-#include maps/mp/zombies/_zm_afterlife;
-#include maps/mp/zombies/_zm_tombstone;
-#include maps/mp/zombies/_zm_equipment;
-#include maps/mp/zombies/_zm_perk_vulture;
+#include maps\mp\_demo;
+#include maps\mp\zombies\_zm_audio;
+#include maps\mp\zombies\_zm_pers_upgrades_functions;
+#include maps\mp\zombies\_zm_power;
+#include maps\mp\zombies\_zm_laststand;
+#include maps\mp\zombies\_zm_weapons;
+#include maps\mp\zombies\_zm_utility;
+#include maps\mp\_utility;
+#include maps\mp\zombies\_zm_stats;
+#include common_scripts\utility;
+#include maps\mp\zombies\_zm_powerups;
+#include maps\mp\zombies\_zm_chugabud;
+#include maps\mp\zombies\_zm_afterlife;
+#include maps\mp\zombies\_zm_tombstone;
+#include maps\mp\zombies\_zm_equipment;
+#include maps\mp\zombies\_zm_perk_vulture;
 init()
 {
 	level.background_shader = getdvarintdefault("enable_background", 1);
@@ -31,12 +31,12 @@ init()
     include_zombie_powerup("random_perk");
     add_zombie_powerup("random_perk", "t6_wpn_zmb_perk_bottle_sleight_world", &"ZOMBIE_POWERUP_RANDOM_PERK", ::func_should_drop_limited, 0, 0, 0); 
     powerup_set_can_pick_up_in_last_stand("random_perk", 1);
-    precacheshaders = array("hud_grenadeicon","killiconheadshot","menu_mp_weapons_1911","hud_icon_sticky_grenade","faction_cdc","specialty_chugabud_zombies","specialty_electric_cherry_zombie","specialty_additionalprimaryweapon_zombies","menu_mp_lobby_icon_customgamemode","specialty_divetonuke_zombies","zombies_rank_1","zombies_rank_3","zombies_rank_2","zombies_rank_4","zombies_rank_5","menu_lobby_icon_facebook","menu_mp_weapons_1911","hud_icon_colt","waypoint_revive","hud_grenadeicon","damage_feedback","menu_lobby_icon_twitter","specialty_doubletap_zombies");
+    precacheshaders = array("menu_zm_cac_grad_stretch","talkingicon","zombies_rank_5_ded","hud_grenadeicon","killiconheadshot","menu_mp_weapons_1911","hud_icon_sticky_grenade","faction_cdc","specialty_chugabud_zombies","specialty_electric_cherry_zombie","specialty_additionalprimaryweapon_zombies","menu_mp_lobby_icon_customgamemode","specialty_divetonuke_zombies","zombies_rank_1","zombies_rank_3","zombies_rank_2","zombies_rank_4","zombies_rank_5","menu_lobby_icon_facebook","menu_mp_weapons_1911","hud_icon_colt","waypoint_revive","hud_grenadeicon","damage_feedback","menu_lobby_icon_twitter","specialty_doubletap_zombies");
     foreach(shader in precacheshaders)
     {
         precacheshader(shader);
     }
-	
+	precachemodel("p6_zm_bu_tombstone_01");
 	level.zombie_last_stand = ::LastStand;
     level.effect_WebFX = loadfx("misc/fx_zombie_powerup_solo_grab");
 
@@ -118,25 +118,58 @@ onPlayerSpawned()
 	self.perkarray = [];
 	self.background_perk = [];
 	self.saved_perks = [];
-
 	self thread PlayerDownedWatcher();
+	//self thread test_the_powerup(); //spawn powerups 
+}
+
+test_the_powerup()
+{
+	self endon("death");
+	self endon("disconnected");
+	level endon("end_Game");
+	wait 10;
+	self iprintlnbold("^7Press ^1[{+smoke}] ^7to test the power up.");
+	for(;;)
+	{
+		if(self secondaryoffhandbuttonpressed())
+		{
+			iprintln("pressed");
+            //spawn bot
+			if(!isdefined(bot)) 
+            	bot = addtestclient();
+
+			bot.ignoreme = 1;
+
+            if(self.sessionstate == "spectator")
+                foreach(zombie in getaiarray(level.zombie_team))
+                    zombie dodamage(self.maxhealth * 2, (0,0,0));
+
+			specific_powerup_drop("random_perk", self.origin + VectorScale(AnglesToForward(self.angles), 70));
+			wait 1;
+            
+		}
+		wait .05;
+	}
 }
 
 PlayerDownedWatcher()
 {
 	level endon("end_game");
 	self endon("disconnect");
-	while(1)
+	for(;;)
 	{
 		self waittill_any_return( "fake_death", "player_downed", "player_revived", "spawned_player", "disconnect", "death", "end_game" );
+
+        if(self hascustomperk("Tombstone"))
+            self thread spawn_tombstone();
+            
+
 		foreach(hud in self.perk_hud)
-    	{
             hud destroy();
-    	}
+
         foreach(hud2 in self.background_perk)
-    	{
             hud2 destroy();
-    	}
+
         self.background_perk = [];
         self.perkarray = [];
         self.perk_hud = [];
@@ -151,7 +184,7 @@ custom_save_perks()
 	self.saved_perks = [];
     for(i = 0; i < self.perkarray.size; i++)
     {
-        if(self.perkarray[i] != "specialty_finalstand" && self.perkarray[i] != "specialty_scavenger")
+        if(self.perkarray[i] != "specialty_finalstand" && self.perkarray[i] != "specialty_scavenger" && self.perkarray[i] != "Tombstone")
         {
 		    self.saved_perks[self.saved_perks.size] = self.perkarray[i];
 	    }
@@ -292,6 +325,7 @@ custom_give_perk( perk, bought, custom, saved_perk )
         {
             self perk_hud_create( perk, 1, 0 );
             self.num_perks++;
+            wait .05;
         }
         else
         {
@@ -311,6 +345,18 @@ perk_hud_create( perk, custom, print )
     switch( perk )
     {
         //CUSTOM PERKS
+        case "Tombstone":
+			color = (0.4, 0.2, 0);
+			color1 = (1, 1, 1);
+			background_shader = "specialty_doubletap_zombies";
+			shader = "menu_zm_cac_grad_stretch";
+            if(print)
+            {
+                self iprintln("^9Tombstone");
+                wait 0.2;
+                self iprintln("This Perk saves players current loadout after player is downed");
+            }
+            break;
         case "MULE":
             if(getdvar( "mapname" ) == "zm_prison")
             {
@@ -380,7 +426,7 @@ perk_hud_create( perk, custom, print )
             color = (1, 0, 0);
             color1 = (1,1,1);
             background_shader = "specialty_doubletap_zombies";
-            shader = "zombies_rank_5";
+            shader = "zombies_rank_5_ded";
             self thread dying_wish_checker();
             if(print)
 			{
@@ -552,7 +598,11 @@ perk_hud_create( perk, custom, print )
 	hud.hidewheninmenu = 1;
 	hud.x = 5.5 + (self.perkarray.size * 30);
     hud.y = 146.5;
-    if(custom && perk != "PHD_FLOPPER" && perk != "MULE" && getdvar( "mapname" ) != "zm_prison" )
+	if( perk == "Tombstone" )
+    {
+        hud SetShader( shader, 24, 19 );
+    }
+    else if(custom && perk != "PHD_FLOPPER" && perk != "MULE" && getdvar( "mapname" ) != "zm_prison" )
     {
         hud SetShader( shader, 24, 23 );
     }
@@ -581,6 +631,14 @@ give_random_perk()
 {
     perks = array();
     //CUSTOM PERKS
+    if(getdvar( "mapname" ) == "zm_prison" || getdvar( "mapname" ) == "zm_nuked" || getdvar( "mapname" ) == "zm_buried" || getdvar( "mapname" ) == "zm_tomb" )
+    {
+        if(!self hascustomperk("Tombstone") && get_players().size > 1)
+        {
+            perks[perks.size] = "Tombstone";
+        }
+    }
+
     if(getdvar( "mapname" ) != "zm_tomb" )
     {
         if(!self hascustomperk("PHD_FLOPPER"))
@@ -646,6 +704,7 @@ give_random_perk()
             perks[perks.size] = "deadshot";
         }
     }
+
     //ORIGINAL PERKS
     if(!self hasPerk("specialty_armorvest"))
 	{
@@ -826,12 +885,17 @@ damage_callback( einflictor, eattacker, idamage, idflags, smeansofdeath, sweapon
             return 0;
         }
     }
+
     if(idamage > self.health && !self.dying_wish_on_cooldown && self hascustomperk("Dying_Wish") )
 	{
         self notify("dying_wish_charge");
         self thread dying_wish_effect();
         return 0;
 	}
+
+    if (idamage > self.health && self hascustomperk("Tombstone"))
+        self thread save_loadout();
+
 	if(isDefined(level.first_player_damage_callback))
 	{
        	return [[level.first_player_damage_callback]](einflictor, eattacker, idamage, idflags, smeansofdeath, sweapon, vpoint, vdir, shitloc, psoffsettime);
@@ -1669,220 +1733,6 @@ custom_tombstone_laststand()
 	}
 }
 
-afterlife_save_loadout()
-{
-	primaries = self getweaponslistprimaries();
-	currentweapon = self getcurrentweapon();
-	self.loadout = spawnstruct();
-	self.loadout.player = self;
-	self.loadout.weapons = [];
-	self.loadout.score = self.score;
-	self.loadout.current_weapon = 0;
-	_a1516 = primaries;
-	index = getFirstArrayKey( _a1516 );
-	while ( isDefined( index ) )
-	{
-		weapon = _a1516[ index ];
-		self.loadout.weapons[ index ] = weapon;
-		self.loadout.stockcount[ index ] = self getweaponammostock( weapon );
-		self.loadout.clipcount[ index ] = self getweaponammoclip( weapon );
-		if ( weaponisdualwield( weapon ) )
-		{
-			weapon_dw = weapondualwieldweaponname( weapon );
-			self.loadout.clipcount2[ index ] = self getweaponammoclip( weapon_dw );
-		}
-		weapon_alt = weaponaltweaponname( weapon );
-		if ( weapon_alt != "none" )
-		{
-			self.loadout.stockcountalt[ index ] = self getweaponammostock( weapon_alt );
-			self.loadout.clipcountalt[ index ] = self getweaponammoclip( weapon_alt );
-		}
-		if ( weapon == currentweapon )
-		{
-			self.loadout.current_weapon = index;
-		}
-		index = getNextArrayKey( _a1516, index );
-	}
-	self.loadout.equipment = self get_player_equipment();
-	if ( isDefined( self.loadout.equipment ) )
-	{
-		self maps/mp/zombies/_zm_equipment::equipment_take( self.loadout.equipment );
-	}
-	if ( self hasweapon( "claymore_zm" ) )
-	{
-		self.loadout.hasclaymore = 1;
-		self.loadout.claymoreclip = self getweaponammoclip( "claymore_zm" );
-	}
-	if ( self hasweapon( "emp_grenade_zm" ) )
-	{
-		self.loadout.hasemp = 1;
-		self.loadout.empclip = self getweaponammoclip( "emp_grenade_zm" );
-	}
-	if ( self hasweapon( "bouncing_tomahawk_zm" ) || self hasweapon( "upgraded_tomahawk_zm" ) )
-	{
-		self.loadout.hastomahawk = 1;
-		self setclientfieldtoplayer( "tomahawk_in_use", 0 );
-	}
-	self.loadout.perks = afterlife_save_perks( self );
-	lethal_grenade = self get_player_lethal_grenade();
-	if ( self hasweapon( lethal_grenade ) )
-	{
-		self.loadout.grenade = self getweaponammoclip( lethal_grenade );
-	}
-	else
-	{
-		self.loadout.grenade = 0;
-	}
-	self.loadout.lethal_grenade = lethal_grenade;
-	self set_player_lethal_grenade( undefined );
-}
-
-afterlife_give_loadout()
-{
-	self takeallweapons();
-	loadout = self.loadout;
-	primaries = self getweaponslistprimaries();
-	while ( loadout.weapons.size > 1 || primaries.size > 1 )
-	{
-		_a1601 = primaries;
-		_k1601 = getFirstArrayKey( _a1601 );
-		while ( isDefined( _k1601 ) )
-		{
-			weapon = _a1601[ _k1601 ];
-			self takeweapon( weapon );
-			_k1601 = getNextArrayKey( _a1601, _k1601 );
-		}
-	}
-	i = 0;
-	while ( i < loadout.weapons.size )
-	{
-		if ( !isDefined( loadout.weapons[ i ] ) )
-		{
-			i++;
-			continue;
-		}
-		else if ( loadout.weapons[ i ] == "none" )
-		{
-			i++;
-			continue;
-		}
-		else
-		{
-			weapon = loadout.weapons[ i ];
-			stock_amount = loadout.stockcount[ i ];
-			clip_amount = loadout.clipcount[ i ];
-			if ( !self hasweapon( weapon ) )
-			{
-				self giveweapon( weapon, 0, self maps/mp/zombies/_zm_weapons::get_pack_a_punch_weapon_options( weapon ) );
-				self setweaponammostock( weapon, stock_amount );
-				self setweaponammoclip( weapon, clip_amount );
-				if ( weaponisdualwield( weapon ) )
-				{
-					weapon_dw = weapondualwieldweaponname( weapon );
-					self setweaponammoclip( weapon_dw, loadout.clipcount2[ i ] );
-				}
-				weapon_alt = weaponaltweaponname( weapon );
-				if ( weapon_alt != "none" )
-				{
-					self setweaponammostock( weapon_alt, loadout.stockcountalt[ i ] );
-					self setweaponammoclip( weapon_alt, loadout.clipcountalt[ i ] );
-				}
-			}
-		}
-		i++;
-	}
-	self setspawnweapon( loadout.weapons[ loadout.current_weapon ] );
-	self switchtoweaponimmediate( loadout.weapons[ loadout.current_weapon ] );
-	if ( isDefined( self get_player_melee_weapon() ) )
-	{
-		self giveweapon( self get_player_melee_weapon() );
-	}
-	self maps/mp/zombies/_zm_equipment::equipment_give( self.loadout.equipment );
-	if ( isDefined( loadout.hasclaymore ) && loadout.hasclaymore && !self hasweapon( "claymore_zm" ) )
-	{
-		self giveweapon( "claymore_zm" );
-		self set_player_placeable_mine( "claymore_zm" );
-		self setactionslot( 4, "weapon", "claymore_zm" );
-		self setweaponammoclip( "claymore_zm", loadout.claymoreclip );
-	}
-	if ( isDefined( loadout.hasemp ) && loadout.hasemp )
-	{
-		self giveweapon( "emp_grenade_zm" );
-		self setweaponammoclip( "emp_grenade_zm", loadout.empclip );
-	}
-	if ( isDefined( loadout.hastomahawk ) && loadout.hastomahawk )
-	{
-		self giveweapon( self.current_tomahawk_weapon );
-		self set_player_tactical_grenade( self.current_tomahawk_weapon );
-		self setclientfieldtoplayer( "tomahawk_in_use", 1 );
-	}
-	self.score = loadout.score;
-	perk_array = maps/mp/zombies/_zm_perks::get_perk_array( 1 );
-	i = 0;
-	while ( i < perk_array.size )
-	{
-		perk = perk_array[ i ];
-		self unsetperk( perk );
-		self set_perk_clientfield( perk, 0 );
-		i++;
-	}
-	while ( isDefined( self.keep_perks ) && self.keep_perks && isDefined( loadout.perks ) && loadout.perks.size > 0 )
-	{
-		i = 0;
-		while ( i < loadout.perks.size )
-		{
-			if ( self hasperk( loadout.perks[ i ] ) )
-			{
-				i++;
-				continue;
-			}
-			else if ( loadout.perks[ i ] == "specialty_quickrevive" && flag( "solo_game" ) )
-			{
-				level.solo_game_free_player_quickrevive = 1;
-			}
-			if ( loadout.perks[ i ] == "specialty_finalstand" )
-			{
-				i++;
-				continue;
-			}
-			else
-			{
-				maps/mp/zombies/_zm_perks::give_perk( loadout.perks[ i ] );
-			}
-			i++;
-		}
-	}
-	self.keep_perks = undefined;
-	self set_player_lethal_grenade( self.loadout.lethal_grenade );
-	if ( loadout.grenade > 0 )
-	{
-		curgrenadecount = 0;
-		if ( self hasweapon( self get_player_lethal_grenade() ) )
-		{
-			self getweaponammoclip( self get_player_lethal_grenade() );
-		}
-		else
-		{
-			self giveweapon( self get_player_lethal_grenade() );
-		}
-		self setweaponammoclip( self get_player_lethal_grenade(), loadout.grenade + curgrenadecount );
-	}
-}
-
-afterlife_save_perks( ent )
-{
-	perk_array = ent get_perk_array( 1 );
-	_a1989 = perk_array;
-	_k1989 = getFirstArrayKey( _a1989 );
-	while ( isDefined( _k1989 ) )
-	{
-		perk = _a1989[ _k1989 ];
-		ent unsetperk( perk );
-		_k1989 = getNextArrayKey( _a1989, _k1989 );
-	}
-	return perk_array;
-}
-
 tombstone_spawn()
 {
 	dc = spawn( "script_model", self.origin + vectorScale( ( 0, 0, 1 ), 40 ) );
@@ -2219,3 +2069,406 @@ player_can_see_me( player )
     playercanseeme = anglefromcenter <= ( ( playerfov * 0.5 ) * ( 1 - banzaivsplayerfovbuffer ) );
     return playercanseeme;
 }
+
+//----Custom-Tombstone----------------------------------------------------------------------------------------------------------------------------------
+
+save_loadout()
+{
+	primaries = self getweaponslistprimaries();
+	currentweapon = self getcurrentweapon();
+	self.current_loadout = spawnstruct();
+	self.current_loadout.player = self;
+	self.current_loadout.weapons = [];
+	self.current_loadout.score = self.score;
+	self.current_loadout.current_weapon = 0;
+	
+    _a1516 = primaries;
+	index = getFirstArrayKey( _a1516 );
+	while ( isDefined( index ) )
+	{
+		weapon = _a1516[ index ];
+        self.current_loadout.weapons[ index ] = weapon;
+		self.current_loadout.stockcount[ index ] = self getweaponammostock( weapon );
+		self.current_loadout.clipcount[ index ] = self getweaponammoclip( weapon );
+		if ( weaponisdualwield( weapon ) )
+		{
+			weapon_dw = weapondualwieldweaponname( weapon );
+			self.current_loadout.clipcount2[ index ] = self getweaponammoclip( weapon_dw );
+		}
+		weapon_alt = weaponaltweaponname( weapon );
+		if ( weapon_alt != "none" )
+		{
+			self.current_loadout.stockcountalt[ index ] = self getweaponammostock( weapon_alt );
+			self.current_loadout.clipcountalt[ index ] = self getweaponammoclip( weapon_alt );
+		}
+		if ( weapon == currentweapon )
+		{
+			self.current_loadout.current_weapon = index;
+		}
+		index = getNextArrayKey( _a1516, index );
+	}
+    
+	self.current_loadout.equipment = self get_player_equipment();
+
+	if ( isDefined( self.current_loadout.equipment ) )
+		self maps/mp/zombies/_zm_equipment::equipment_take( self.current_loadout.equipment );
+
+    if ( maps\mp\zombies\_zm_weap_cymbal_monkey::cymbal_monkey_exists() )
+        self.current_loadout.zombie_cymbal_monkey_count = self getweaponammoclip( "cymbal_monkey_zm" );
+
+	if ( self hasweapon( "claymore_zm" ) )
+	{
+		self.current_loadout.hasclaymore = 1;
+		self.current_loadout.claymoreclip = self getweaponammoclip( "claymore_zm" );
+	}
+	if ( self hasweapon( "emp_grenade_zm" ) )
+	{
+		self.current_loadout.hasemp = 1;
+		self.current_loadout.empclip = self getweaponammoclip( "emp_grenade_zm" );
+	}
+	if ( self hasweapon( "bouncing_tomahawk_zm" ) || self hasweapon( "upgraded_tomahawk_zm" ) )
+	{
+		self.current_loadout.hastomahawk = 1;
+		self setclientfieldtoplayer( "tomahawk_in_use", 0 );
+	}
+	self.current_loadout.perks = self custom_save_perks();
+	lethal_grenade = self get_player_lethal_grenade();
+
+	if ( self hasweapon( lethal_grenade ) )
+		self.current_loadout.grenade = self getweaponammoclip( lethal_grenade );
+	else
+		self.current_loadout.grenade = 0;
+
+	self.current_loadout.lethal_grenade = lethal_grenade;
+	self set_player_lethal_grenade( undefined );
+}
+
+give_loadout()
+{
+    foreach(hud in self.perk_hud)
+    {
+        hud destroy();
+    }
+    foreach(hud2 in self.background_perk)
+    {
+        hud2 destroy();
+    }
+    self.background_perk = [];
+    self.perkarray = [];
+    self.perk_hud = [];
+    self notify("stopcustomperk");
+    self.bleedout_time = 30;
+    self.ignore_lava_damage = 0;
+
+	self takeallweapons();
+	loadout = self.current_loadout;
+	primaries = self getweaponslistprimaries();
+	if ( loadout.weapons.size > 1 || primaries.size > 1 )
+    {
+        foreach ( weapon in primaries )
+            self takeweapon( weapon );
+    }
+
+    for ( i = 0; i < loadout.weapons.size; i++ )
+    {
+        if ( !isdefined( loadout.weapons[i] ) )
+            continue;
+            
+        if ( loadout.weapons[i] == "none" )
+            continue;
+
+        weapon = loadout.weapons[i];
+        stock_amount = loadout.stockcount[i];
+        clip_amount = loadout.clipcount[i];
+
+        if ( !self hasweapon( weapon ) )
+        {
+            self giveweapon( weapon, 0, self maps\mp\zombies\_zm_weapons::get_pack_a_punch_weapon_options( weapon ) );
+            self setweaponammostock( weapon, stock_amount );
+            self setweaponammoclip( weapon, clip_amount );
+
+            if ( weaponisdualwield( weapon ) )
+            {
+                weapon_dw = weapondualwieldweaponname( weapon );
+                self setweaponammoclip( weapon_dw, loadout.clipcount2[i] );
+            }
+
+            weapon_alt = weaponaltweaponname( weapon );
+
+            if ( weapon_alt != "none" )
+            {
+                self setweaponammostock( weapon_alt, loadout.stockcountalt[i] );
+                self setweaponammoclip( weapon_alt, loadout.clipcountalt[i] );
+            }
+        }
+    }
+
+	self setspawnweapon( loadout.weapons[ loadout.current_weapon ] );
+	self switchtoweaponimmediate( loadout.weapons[ loadout.current_weapon ] );
+	if ( isDefined( self get_player_melee_weapon() ) )
+	{
+		self giveweapon( self get_player_melee_weapon() );
+	}
+	self maps/mp/zombies/_zm_equipment::equipment_give( self.current_loadout.equipment );
+	if ( isDefined( loadout.hasclaymore ) && loadout.hasclaymore && !self hasweapon( "claymore_zm" ) )
+	{
+		self giveweapon( "claymore_zm" );
+		self set_player_placeable_mine( "claymore_zm" );
+		self setactionslot( 4, "weapon", "claymore_zm" );
+		self setweaponammoclip( "claymore_zm", loadout.claymoreclip );
+	}
+    if ( isDefined( loadout.zombie_cymbal_monkey_count ) && loadout.zombie_cymbal_monkey_count )
+	{
+        self maps\mp\zombies\_zm_weap_cymbal_monkey::player_give_cymbal_monkey();
+        self setweaponammoclip( "cymbal_monkey_zm", loadout.zombie_cymbal_monkey_count );
+	}
+	if ( isDefined( loadout.hasemp ) && loadout.hasemp )
+	{
+		self giveweapon( "emp_grenade_zm" );
+		self setweaponammoclip( "emp_grenade_zm", loadout.empclip );
+	}
+	if ( isDefined( loadout.hastomahawk ) && loadout.hastomahawk )
+	{
+		self giveweapon( self.current_tomahawk_weapon );
+		self set_player_tactical_grenade( self.current_tomahawk_weapon );
+		self setclientfieldtoplayer( "tomahawk_in_use", 1 );
+	}
+	self.score = loadout.score;
+	perk_array = maps/mp/zombies/_zm_perks::get_perk_array( 1 );
+	i = 0;
+	while ( i < perk_array.size )
+	{
+		perk = perk_array[ i ];
+		self unsetperk( perk );
+		self.num_perks--;
+
+		self set_perk_clientfield( perk, 0 );
+		i++;
+	}
+    if(isDefined( self.saved_perks ) && self.saved_perks.size > 0)
+    {
+        for(i = 0; i < self.saved_perks.size; i++)
+        {
+            if( self.saved_perks[ i ] == "specialty_longersprint" || self.saved_perks[ i ] == "specialty_armorvest" || self.saved_perks[ i ] == "specialty_rof" || self.saved_perks[ i ] == "specialty_fastreload" || self.saved_perks[ i ] == "specialty_grenadepulldeath" || self.saved_perks[ i ] == "specialty_deadshot" || self.saved_perks[ i ] == "specialty_nomotionsensor" || self.saved_perks[ i ] == "specialty_quickrevive" || self.saved_perks[ i ] == "specialty_additionalprimaryweapon" || self.saved_perks[ i ] == "specialty_flakjacket")
+            {
+                
+                custom_give_perk(self.saved_perks[ i ], 0, 0, 0);
+            } 
+            else 
+            {
+                custom_give_perk(self.saved_perks[ i ], 0, 1, 1);
+            }
+        }
+    }
+    self.fakedowns = self.downs;
+    self.keep_perks = undefined;
+	self set_player_lethal_grenade( self.current_loadout.lethal_grenade );
+	if ( loadout.grenade > 0 )
+	{
+		curgrenadecount = 0;
+
+		if ( self hasweapon( self get_player_lethal_grenade()))
+			self getweaponammoclip( self get_player_lethal_grenade() );
+		else
+			self giveweapon( self get_player_lethal_grenade() );
+
+		self setweaponammoclip( self get_player_lethal_grenade(), loadout.grenade + curgrenadecount );
+	}
+}
+
+
+spawn_tombstone()
+{
+    if(getdvar("mapname") == "zm_prison" && isDefined(self.afterlife) && !self.afterlife)
+        self thread suicide_trigger_spawn();
+    else if(getdvar("mapname") != "zm_prison")
+        self thread suicide_trigger_spawn();
+
+	tombstone = spawn( "script_model", self.origin + vectorScale( ( 0, 0, 1 ), 40 ) );
+	tombstone.angles = self.angles;
+	tombstone setmodel( "tag_origin" );
+	tombstone_icon = spawn( "script_model", self.origin + vectorScale( ( 0, 0, 1 ), 40 ) );
+	tombstone_icon.angles = self.angles;
+    tombstone_hint = spawn( "trigger_radius", self.origin, 0, 35, 64 );
+    tombstone_hint SetCursorHint("HINT_NOICON");
+    tombstone_hint setHintString("This is ^1 " + self.name + " ^7tombstone");
+
+
+    if(getdvar("mapname") == "zm_buried")
+	    tombstone_icon setmodel( "p6_zm_bu_tombstone_01" ); 
+    else if(getdvar("mapname") == "zm_prison")
+        tombstone_icon setmodel( "p6_anim_zm_al_magic_box_lock" );
+    else
+        tombstone_icon setmodel( "zombie_teddybear" );
+
+    tombstone_icon linkto( tombstone );
+	tombstone.icon = tombstone_icon;
+	tombstone.script_noteworthy = "player_tombstone_model";
+	tombstone.player = self;
+	self thread custom_tombstone_clear();
+	tombstone thread custom_tombstone_wobble();
+	tombstone thread custom_tombstone_revived( self );
+	result = self waittill_any_return( "player_revived", "spawned_player", "disconnect" );
+	if(isdefined(self.keep_perks) && self.keep_perks)
+	{
+        if ( result == "player_revived" || result == "disconnect" )
+        {
+            tombstone notify( "tombstone_timedout" );
+            tombstone_icon unlink();
+            tombstone_icon delete();
+            tombstone delete();
+            tombstone_hint delete();
+            return;
+        }
+    }
+    if(getdvar("mapname") != "zm_prison")
+    {
+        if ( result == "player_revived" || result == "disconnect" )
+        {
+            tombstone notify( "tombstone_timedout" );
+            tombstone_icon unlink();
+            tombstone_icon delete();
+            tombstone delete();
+            tombstone_hint delete();
+            return;
+        }
+    }
+	tombstone thread custom_tombstone_timeout(tombstone_hint);
+	tombstone thread grab_custom_tombstone(tombstone_hint);
+}
+
+grab_custom_tombstone(hint)
+{
+	self endon( "tombstone_timedout" );
+	wait 1;
+	while ( isDefined( self ) )
+	{
+		players = get_players();
+		i = 0;
+		while ( i < players.size )
+		{
+			if ( players[ i ].is_zombie )
+			{
+				i++;
+				continue;
+			}
+			else
+			{
+				if ( isDefined( self.player ) && players[ i ] == self.player )
+				{
+                    istombstonepowered = 1;
+					if ( istombstonepowered && !players[ i ] maps/mp/zombies/_zm_laststand::player_is_in_laststand() )
+					{
+						dist = distance( players[ i ].origin, self.origin );
+						if ( dist < 64 )
+						{
+							playfx( level._effect[ "powerup_grabbed" ], self.origin );
+							playfx( level._effect[ "powerup_grabbed_wave" ], self.origin );
+							players[ i ] give_loadout();
+							wait 0.1;
+							playsoundatposition( "zmb_tombstone_grab", self.origin );
+							self stoploopsound();
+							self.icon unlink();
+							self.icon delete();
+							self delete();
+                            hint delete();
+							self notify( "tombstone_grabbed" );
+							players[ i ] clientnotify( "dc0" );
+							players[ i ] notify( "dance_on_my_grave" );
+						}
+					}
+				}
+			}
+            wait .1;
+			i++;
+		}
+		wait_network_frame();
+	}
+}
+
+custom_tombstone_clear()
+{
+    result = self waittill_any_return( "tombstone_timedout", "tombstone_grabbed" );
+    self.current_loadout = spawnstruct();
+}
+
+custom_tombstone_wobble()
+{
+    self endon( "tombstone_grabbed" );
+    self endon( "tombstone_timedout" );
+
+    if ( isdefined( self ) )
+    {
+        wait 1;
+        playfxontag( level._effect["powerup_on"], self, "tag_origin" );
+    }
+
+    while ( isdefined( self ) )
+    {
+        self rotateyaw( 360, 3 );
+        wait 2.9;
+    }
+}
+
+custom_tombstone_timeout(hint)
+{
+    self endon( "tombstone_grabbed" );
+    self thread playtombstonetimeraudio();
+    wait 48.5;
+
+    for ( i = 0; i < 40; i++ )
+    {
+        if ( i % 2 )
+            self.icon ghost();
+        else
+            self.icon show();
+
+        if ( i < 15 )
+        {
+            wait 0.5;
+            continue;
+        }
+
+        if ( i < 25 )
+        {
+            wait 0.25;
+            continue;
+        }
+
+        wait 0.1;
+    }
+
+    self notify( "tombstone_timedout" );
+    self.icon unlink();
+    self.icon delete();
+    self delete();
+    hint delete();
+}
+
+custom_tombstone_revived( player )
+{
+    self endon( "tombstone_timedout" );
+    player endon( "disconnect" );
+    shown = 1;
+
+    while ( isdefined( self ) && isdefined( player ) )
+    {
+        if ( isdefined( player.revivetrigger ) &&  isdefined( player.revivetrigger.beingrevived ) && player.revivetrigger.beingrevived )
+        {
+            if ( shown )
+            {
+                shown = 0;
+                self.icon hide();
+            }
+        }
+        else if ( !shown )
+        {
+            shown = 1;
+            self.icon show();
+        }
+
+        wait 0.05;
+    }
+}
+
+//--^-Custom-Tombstone-^--------------------------------------------------------------------------------------------------------------------------------
