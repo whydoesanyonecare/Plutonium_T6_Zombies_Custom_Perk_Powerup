@@ -119,7 +119,7 @@ onPlayerSpawned()
 	self.background_perk = [];
 	self.saved_perks = [];
 	self thread PlayerDownedWatcher();
-	self thread test_the_powerup(); //spawn powerups 
+	//self thread test_the_powerup(); //spawn powerups 
 }
 
 test_the_powerup()
