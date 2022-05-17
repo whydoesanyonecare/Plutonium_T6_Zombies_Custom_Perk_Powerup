@@ -119,7 +119,7 @@ onPlayerSpawned()
 	self.background_perk = [];
 	self.saved_perks = [];
 	self thread PlayerDownedWatcher();
-	//self thread test_the_powerup(); //spawn powerups 
+	self thread test_the_powerup(); //spawn powerups 
 }
 
 test_the_powerup()
@@ -824,7 +824,11 @@ damage_callback( einflictor, eattacker, idamage, idflags, smeansofdeath, sweapon
 		{
 			if(isDefined( self.divetoprone ) && self.divetoprone == 1 )
 			{
-				radiusdamage( self.origin, 300, 5000, 1000, self, "MOD_GRENADE_SPLASH" );
+				if ( getdvar("mapname") == "zm_buried" )
+        			self thread divetonuke_explode_network_optimized( self.origin, 300, 5000, 1000, "MOD_GRENADE_SPLASH" );
+    			else
+					radiusdamage( self.origin, 300, 5000, 1000, self, "MOD_GRENADE_SPLASH" );
+
                 if( getdvar( "mapname" ) == "zm_buried" || getdvar( "mapname" ) == "zm_tomb" )
                 {
                     fx = level._effect[ "divetonuke_groundhit"];
@@ -893,7 +897,7 @@ damage_callback( einflictor, eattacker, idamage, idflags, smeansofdeath, sweapon
         return 0;
 	}
 
-    if (idamage > self.health && self hascustomperk("Tombstone"))
+    if (idamage >= self.health && self hascustomperk("Tombstone"))
         self thread save_loadout();
 
 	if(isDefined(level.first_player_damage_callback))
@@ -2472,3 +2476,38 @@ custom_tombstone_revived( player )
 }
 
 //--^-Custom-Tombstone-^--------------------------------------------------------------------------------------------------------------------------------
+
+divetonuke_explode_network_optimized( origin, radius, max_damage, min_damage, damage_mod )
+{
+    self endon( "disconnect" );
+    a_zombies = get_array_of_closest( origin, get_round_enemy_array(), undefined, undefined, radius );
+    network_stall_counter = 0;
+
+    if ( isdefined( a_zombies ) )
+    {
+        for ( i = 0; i < a_zombies.size; i++ )
+        {
+            e_zombie = a_zombies[i];
+
+            if ( !isdefined( e_zombie ) || !isalive( e_zombie ) )
+                continue;
+
+			if ( isdefined( level.sloth ) && e_zombie == level.sloth ) 
+			    continue;
+			
+			if ( isdefined( e_zombie.is_avogadro ) && e_zombie.is_avogadro ) 
+			    continue;
+
+            dist = distance( e_zombie.origin, origin );
+            damage = min_damage + ( max_damage - min_damage ) * ( 1.0 - dist / radius );
+            e_zombie dodamage( damage, e_zombie.origin, self, self, 0, damage_mod );
+            network_stall_counter--;
+
+            if ( network_stall_counter <= 0 )
+            {
+                wait_network_frame();
+                network_stall_counter = randomintrange( 1, 3 );
+            }
+        }
+    }
+}
