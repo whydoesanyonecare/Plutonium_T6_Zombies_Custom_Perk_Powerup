@@ -1396,56 +1396,49 @@ custom_afterlife_give_loadout()
 {
 	self takeallweapons();
 	loadout = self.loadout;
+
 	primaries = self getweaponslistprimaries();
-	while ( loadout.weapons.size > 1 || primaries.size > 1 )
-	{
-		_a1601 = primaries;
-		_k1601 = getFirstArrayKey( _a1601 );
-		while ( isDefined( _k1601 ) )
-		{
-			weapon = _a1601[ _k1601 ];
-			self takeweapon( weapon );
-			_k1601 = getNextArrayKey( _a1601, _k1601 );
-		}
-	}
-	i = 0;
-	while ( i < loadout.weapons.size )
-	{
-		if ( !isDefined( loadout.weapons[ i ] ) )
-		{
-			i++;
-			continue;
-		}
-		else if ( loadout.weapons[ i ] == "none" )
-		{
-			i++;
-			continue;
-		}
-		else
-		{
-			weapon = loadout.weapons[ i ];
-			stock_amount = loadout.stockcount[ i ];
-			clip_amount = loadout.clipcount[ i ];
-			if ( !self hasweapon( weapon ) )
-			{
-				self giveweapon( weapon, 0, self maps/mp/zombies/_zm_weapons::get_pack_a_punch_weapon_options( weapon ) );
-				self setweaponammostock( weapon, stock_amount );
-				self setweaponammoclip( weapon, clip_amount );
-				if ( weaponisdualwield( weapon ) )
-				{
-					weapon_dw = weapondualwieldweaponname( weapon );
-					self setweaponammoclip( weapon_dw, loadout.clipcount2[ i ] );
-				}
-				weapon_alt = weaponaltweaponname( weapon );
-				if ( weapon_alt != "none" )
-				{
-					self setweaponammostock( weapon_alt, loadout.stockcountalt[ i ] );
-					self setweaponammoclip( weapon_alt, loadout.clipcountalt[ i ] );
-				}
-			}
-		}
-		i++;
-	}
+
+    if ( loadout.weapons.size > 1 || primaries.size > 1 )
+    {
+        foreach ( weapon in primaries )
+            self takeweapon( weapon );
+    }
+
+    for ( i = 0; i < loadout.weapons.size; i++ )
+    {
+        if ( !isdefined( loadout.weapons[i] ) )
+            continue;
+
+        if ( loadout.weapons[i] == "none" )
+            continue;
+
+        weapon = loadout.weapons[i];
+        stock_amount = loadout.stockcount[i];
+        clip_amount = loadout.clipcount[i];
+
+        if ( !self hasweapon( weapon ) )
+        {
+            self giveweapon( weapon, 0, self maps\mp\zombies\_zm_weapons::get_pack_a_punch_weapon_options( weapon ) );
+            self setweaponammostock( weapon, stock_amount );
+            self setweaponammoclip( weapon, clip_amount );
+
+            if ( weaponisdualwield( weapon ) )
+            {
+                weapon_dw = weapondualwieldweaponname( weapon );
+                self setweaponammoclip( weapon_dw, loadout.clipcount2[i] );
+            }
+
+            weapon_alt = weaponaltweaponname( weapon );
+
+            if ( weapon_alt != "none" )
+            {
+                self setweaponammostock( weapon_alt, loadout.stockcountalt[i] );
+                self setweaponammoclip( weapon_alt, loadout.clipcountalt[i] );
+            }
+        }
+    }
+
 	self setspawnweapon( loadout.weapons[ loadout.current_weapon ] );
 	self switchtoweaponimmediate( loadout.weapons[ loadout.current_weapon ] );
 	if ( isDefined( self get_player_melee_weapon() ) )
@@ -1485,18 +1478,21 @@ custom_afterlife_give_loadout()
 	}
     if(isDefined( self.keep_perks ) && self.keep_perks )
     {
-        for(i = 0; i < self.saved_perks.size; i++)
+        if(isdefined(self.saved_perks) && self.saved_perks.size > 0)
         {
-            if(self.saved_perks[ i ] == "specialty_finalstand")
+            for(i = 0; i < self.saved_perks.size; i++)
             {
-            }
-            if( self.saved_perks[ i ] == "specialty_longersprint" || self.saved_perks[ i ] == "specialty_armorvest" || self.saved_perks[ i ] == "specialty_rof" || self.saved_perks[ i ] == "specialty_fastreload" || self.saved_perks[ i ] == "specialty_grenadepulldeath" || self.saved_perks[ i ] == "specialty_deadshot" || self.saved_perks[ i ] == "specialty_nomotionsensor" || self.saved_perks[ i ] == "specialty_quickrevive" || self.saved_perks[ i ] == "specialty_scavenger" || self.saved_perks[ i ] == "specialty_additionalprimaryweapon" || self.saved_perks[ i ] == "specialty_flakjacket")
-            {
-                custom_give_perk(self.saved_perks[ i ], 0, 0, 0);
-            } 
-            else 
-            {
-                custom_give_perk(self.saved_perks[ i ], 0, 1, 0); //cannot set "saved_perk" to 1, player wont get any perks back when returning from afterlife
+                if(self.saved_perks[ i ] == "specialty_finalstand")
+                {
+                }
+                if( self.saved_perks[ i ] == "specialty_longersprint" || self.saved_perks[ i ] == "specialty_armorvest" || self.saved_perks[ i ] == "specialty_rof" || self.saved_perks[ i ] == "specialty_fastreload" || self.saved_perks[ i ] == "specialty_grenadepulldeath" || self.saved_perks[ i ] == "specialty_deadshot" || self.saved_perks[ i ] == "specialty_nomotionsensor" || self.saved_perks[ i ] == "specialty_quickrevive" || self.saved_perks[ i ] == "specialty_scavenger" || self.saved_perks[ i ] == "specialty_additionalprimaryweapon" || self.saved_perks[ i ] == "specialty_flakjacket")
+                {
+                    custom_give_perk(self.saved_perks[ i ], 0, 0, 0);
+                } 
+                else 
+                {
+                    custom_give_perk(self.saved_perks[ i ], 0, 1, 0); //cannot set "saved_perk" to 1, player wont get any perks back when returning from afterlife
+                }
             }
         }
     }
