@@ -21,11 +21,7 @@
 #include maps\mp\zombies\_zm_tombstone;
 #include maps\mp\zombies\_zm_equipment;
 #include maps\mp\zombies\_zm_perk_vulture;
-#include maps\mp\zombies\_zm_weap_time_bomb;
-main()
-{
-    replacefunc(::_restore_player_perks_and_weapons, ::custom_restore_player_perks_and_weapons);
-}
+
 
 init()
 {
@@ -324,7 +320,7 @@ custom_give_perk( perk, bought, custom, saved_perk )
         self.perks_active[ self.perks_active.size ] = perk;
         self notify("perk_acquired");
         
-        if(isDefined(self.time_bomb_perk) && !self.time_bomb_perk)
+        if(!isDefined(level.time_bomb_whiteout_hudelem))
             self perk_hud_create( perk, 0, 0 );
 
         self thread perk_think( perk );
@@ -2527,126 +2523,4 @@ divetonuke_explode_network_optimized( origin, radius, max_damage, min_damage, da
             }
         }
     }
-}
-
-custom_restore_player_perks_and_weapons( s_temp )
-{
-    if ( isdefined( s_temp.is_spectator ) && s_temp.is_spectator )
-        self restore_player_to_initial_loadout( s_temp );
-    else if ( isdefined( s_temp.is_last_stand ) && s_temp.is_last_stand )
-    {
-        self.stored_weapon_info = s_temp.stored_weapon_info;
-
-        self [[ level.zombie_last_stand_ammo_return ]]();
-    }
-    else
-    {
-        a_current_perks = self get_player_perk_list();
-
-        foreach ( perk in a_current_perks )
-            self notify( perk + "_stop" );
-
-        wait_network_frame();
-
-        if ( get_players().size == 1 )
-        {
-            if ( isinarray( s_temp.perks_all, "specialty_quickrevive" ) && isdefined( level.solo_lives_given ) && level.solo_lives_given > 0 && level.solo_lives_given < 3 && isdefined( self.lives ) && self.lives == 1 )
-                level.solo_lives_given--;
-        }
-
-        if ( isdefined( s_temp.perks_active ) )
-        {
-            for ( i = 0; i < s_temp.perks_active.size; i++ )
-            {
-                if ( get_players().size == 1 && s_temp.perks_active[i] == "specialty_quickrevive" )
-                {
-                    if ( isdefined( level.solo_lives_given ) && level.solo_lives_given == 3 && isdefined( self.lives ) && self.lives == 0 )
-                        continue;
-                }
-                self.time_bomb_perk = 1;
-                //iPrintLn("timebomb perks");
-                self maps\mp\zombies\_zm_perks::give_perk( s_temp.perks_active[i] );
-                wait_network_frame();
-                self.time_bomb_perk = 0;
-
-                perk_active = s_temp.perks_active[i]; //hotfix
-
-                if ( isdefined( s_temp.perks_disabled ) && isdefined( s_temp.perks_disabled[perk_active] ) && s_temp.perks_disabled[perk_active] )
-                {
-                    self maps\mp\zombies\_zm_perks::perk_pause( s_temp.perks_active[i] );
-                    wait_network_frame();
-                }
-            }
-        }
-
-        self.disabled_perks = s_temp.perks_disabled;
-        self.num_perks = s_temp.perk_count;
-        self.lives = s_temp.lives_remaining;
-        self takeallweapons();
-        self set_player_melee_weapon( level.zombie_melee_weapon_player_init );
-
-        for ( i = 0; i < s_temp.weapons.array.size; i++ )
-        {
-            str_weapon_temp = s_temp.weapons.array[i];
-            n_ammo_reserve = s_temp.weapons.ammo_reserve[i];
-            n_ammo_clip = s_temp.weapons.ammo_clip[i];
-            n_type = s_temp.weapons.type[i];
-
-            if ( !is_temporary_zombie_weapon( str_weapon_temp ) && str_weapon_temp != "time_bomb_zm" )
-            {
-                if ( isdefined( level.zombie_weapons[str_weapon_temp] ) && isdefined( level.zombie_weapons[str_weapon_temp].vox ) )
-                    self maps\mp\zombies\_zm_weapons::weapon_give( str_weapon_temp, issubstr( str_weapon_temp, "upgrade" ) );
-                else
-                    self giveweapon( str_weapon_temp, 0, self maps\mp\zombies\_zm_weapons::get_pack_a_punch_weapon_options( str_weapon_temp ) );
-
-                if ( n_type == 1 )
-                    self setweaponammofuel( str_weapon_temp, n_ammo_clip );
-                else if ( n_type == 2 )
-                    self setweaponoverheating( 0, n_ammo_clip, str_weapon_temp );
-                else if ( isdefined( n_ammo_clip ) )
-                    self setweaponammoclip( str_weapon_temp, n_ammo_clip );
-
-                self setweaponammostock( str_weapon_temp, n_ammo_reserve );
-            }
-        }
-
-        if ( s_temp.weapons.primary == "none" || s_temp.weapons.primary == "time_bomb_zm" )
-        {
-            for ( i = 0; i < s_temp.weapons.array.size; i++ )
-            {
-                str_weapon_type = weapontype( s_temp.weapons.array[i] );
-
-                if ( !is_player_equipment( str_weapon_type ) && str_weapon_type == "bullet" || str_weapon_type == "projectile" )
-                {
-                    str_weapon_temp = s_temp.weapons.array[i];
-                    break;
-                }
-            }
-
-            self switchtoweapon( str_weapon_temp );
-        }
-        else
-            self switchtoweapon( s_temp.weapons.primary );
-
-        self maps\mp\zombies\_zm_equipment::equipment_take( self.current_equipment );
-
-        if ( isdefined( self.deployed_equipment ) && isinarray( self.deployed_equipment, s_temp.current_equipment ) )
-            self maps\mp\zombies\_zm_equipment::equipment_take( s_temp.current_equipment );
-
-        if ( isdefined( s_temp.current_equipment ) )
-        {
-            self.do_not_display_equipment_pickup_hint = 1;
-            self maps\mp\zombies\_zm_equipment::equipment_give( s_temp.current_equipment );
-            self.do_not_display_equipment_pickup_hint = undefined;
-        }
-
-        if ( isinarray( s_temp.weapons.array, "time_bomb_zm" ) )
-        {
-            wait_network_frame();
-            self.time_bomb_detonator_only = 1;
-            self swap_weapon_to_detonator();
-        }
-    }
-
-    self ent_flag_set( "time_bomb_restore_thread_done" );
 }
