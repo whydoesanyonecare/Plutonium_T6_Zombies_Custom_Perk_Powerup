@@ -187,10 +187,11 @@ custom_save_perks()
 	self.saved_perks = [];
     for(i = 0; i < self.perkarray.size; i++)
     {
-        if(self.perkarray[i] != "specialty_finalstand" && self.perkarray[i] != "specialty_scavenger" && self.perkarray[i] != "Tombstone")
-        {
+        if(self.perkarray[i] != "specialty_finalstand" && self.perkarray[i] != "specialty_scavenger")
 		    self.saved_perks[self.saved_perks.size] = self.perkarray[i];
-	    }
+
+		if(!original_perks(self.perkarray[i]))
+			self.num_perks--;
     }
 	perk_array = maps/mp/zombies/_zm_perks::get_perk_array( 0 );
 	for (i = 0; i < perk_array.size; i++)
@@ -198,6 +199,18 @@ custom_save_perks()
 		perk = perk_array[i];
 		self unsetperk( perk );
 	}
+	iprintln(self.num_perks);
+}
+
+original_perks(perk)
+{
+	original_perks = array("specialty_armorvest", "specialty_rof", "specialty_fastreload", "specialty_longersprint", "specialty_quickrevive", "specialty_deadshot", "specialty_grenadepulldeath", "specialty_flakjacket", "specialty_additionalprimaryweapon", "specialty_scavenger", "specialty_finalstand");
+	for(i = 0; i < original_perks.size; i++)
+	{
+		if(original_perks[i] == perk)
+			return true;
+	}
+	return false;
 }
 
 TrackPerkPowerup()
