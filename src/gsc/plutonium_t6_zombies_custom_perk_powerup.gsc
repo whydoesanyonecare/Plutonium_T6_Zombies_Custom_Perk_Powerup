@@ -1021,8 +1021,10 @@ dying_wish_checker()
         self.dying_wish_uses++;
         self.dying_wish_on_cooldown = 1;
         delay = 300 + (self.dying_wish_uses * 30);
+        
         if(delay >= 600)
-        delay = 600;
+            delay = 600;
+
         wait delay;
     }
 }
