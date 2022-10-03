@@ -199,7 +199,6 @@ custom_save_perks()
 		perk = perk_array[i];
 		self unsetperk( perk );
 	}
-	iprintln(self.num_perks);
 }
 
 original_perks(perk)
