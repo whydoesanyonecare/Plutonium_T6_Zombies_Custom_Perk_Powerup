@@ -22,7 +22,6 @@
 #include maps\mp\zombies\_zm_equipment;
 #include maps\mp\zombies\_zm_perk_vulture;
 
-
 init()
 {
 	level.background_shader = getdvarintdefault("enable_background", 1);
@@ -31,7 +30,7 @@ init()
     isTown(); //tombstone fix 
 
     include_zombie_powerup("random_perk");
-    add_zombie_powerup("random_perk", "t6_wpn_zmb_perk_bottle_sleight_world", &"ZOMBIE_POWERUP_RANDOM_PERK", ::func_should_drop_limited, 0, 0, 0); 
+    add_zombie_powerup("random_perk", "t6_wpn_zmb_perk_bottle_sleight_world", &"ZOMBIE_POWERUP_RANDOM_PERK", ::func_should_always_drop, 0, 0, 0); 
     powerup_set_can_pick_up_in_last_stand("random_perk", 1);
     precacheshaders = array("menu_zm_cac_grad_stretch","talkingicon","zombies_rank_5_ded","hud_grenadeicon","killiconheadshot","menu_mp_weapons_1911","hud_icon_sticky_grenade","faction_cdc","specialty_chugabud_zombies","specialty_electric_cherry_zombie","specialty_additionalprimaryweapon_zombies","menu_mp_lobby_icon_customgamemode","specialty_divetonuke_zombies","zombies_rank_1","zombies_rank_3","zombies_rank_2","zombies_rank_4","zombies_rank_5","menu_lobby_icon_facebook","menu_mp_weapons_1911","hud_icon_colt","waypoint_revive","hud_grenadeicon","damage_feedback","menu_lobby_icon_twitter","specialty_doubletap_zombies");
     foreach(shader in precacheshaders)
