@@ -4,7 +4,7 @@
 
 This script add custom perk powerup to bo2 zombies, custom perks are included in modified version of original perk system.
 
-INSTALL: Copy compiled script to %localappdata%\Plutonium\storage\t6\scripts\zm folder.
+INSTALL: Copy compiled script to ```%localappdata%\Plutonium\storage\t6\scripts\zm folder```.
 
 # Custom Perks:
 ```
