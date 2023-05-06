@@ -1,4 +1,8 @@
+//this is old code and might have some bugs
+
 //issues: hint for custom perks cannot be disabled in afterlife perks restore or player wont get any perks back
+//updated to work with new gsc tool compiler
+
 
 #include maps\mp\zombies\_zm;
 #include maps\mp\zombies\_zm_perks;
@@ -13,7 +17,6 @@
 #include maps\mp\zombies\_zm_weapons;
 #include maps\mp\zombies\_zm_utility;
 #include maps\mp\_utility;
-#include maps\mp\zombies\_zm_stats;
 #include common_scripts\utility;
 #include maps\mp\zombies\_zm_powerups;
 #include maps\mp\zombies\_zm_chugabud;
@@ -51,7 +54,7 @@ init()
     } 
     else 
     {
-        maps/mp/zombies/_zm::register_player_damage_callback( ::damage_callback );
+        maps\mp\zombies\_zm::register_player_damage_callback( ::damage_callback );
     }
     if(isDefined(level._zombiemode_powerup_grab))
     {
@@ -192,7 +195,7 @@ custom_save_perks()
 		if(!original_perks(self.perkarray[i]))
 			self.num_perks--;
     }
-	perk_array = maps/mp/zombies/_zm_perks::get_perk_array( 0 );
+	perk_array = maps\mp\zombies\_zm_perks::get_perk_array( 0 );
 	for (i = 0; i < perk_array.size; i++)
     {
 		perk = perk_array[i];
@@ -885,30 +888,30 @@ damage_callback( einflictor, eattacker, idamage, idflags, smeansofdeath, sweapon
             {
                 if ( isDefined( self.stub ) )
                 {
-                    thread maps/mp/zombies/_zm_unitrigger::unregister_unitrigger( self.stub );
+                    thread maps\mp\zombies\_zm_unitrigger::unregister_unitrigger( self.stub );
                 }
                 playsoundatposition( "wpn_riotshield_zm_destroy", self.origin );
                 self notify("destroy_riotshield");
                 if(getdvar( "mapname" ) == "zm_prison")
                 {
-                    self maps/mp/zombies/_zm_equipment::equipment_take( "alcatraz_shield_zm" );
+                    self maps\mp\zombies\_zm_equipment::equipment_take( "alcatraz_shield_zm" );
                 }
                 if(getdvar( "mapname" ) == "zm_tomb")
                 {
-                    self maps/mp/zombies/_zm_equipment::equipment_take( "tomb_shield_zm" );
+                    self maps\mp\zombies\_zm_equipment::equipment_take( "tomb_shield_zm" );
                 }
                 if(getdvar( "mapname" ) == "zm_transit")
                 {
-                    self maps/mp/zombies/_zm_equipment::equipment_take( "riotshield_zm" );
+                    self maps\mp\zombies\_zm_equipment::equipment_take( "riotshield_zm" );
                 }
-                maps/mp/zombies/_zm_equipment::equipment_disappear_fx( self.origin, level._riotshield_dissapear_fx );
+                maps\mp\zombies\_zm_equipment::equipment_disappear_fx( self.origin, level._riotshield_dissapear_fx );
                 self enableInvulnerability();
                 wait 1;
                 self disableInvulnerability();
             }
             else
             {
-                self deployed_set_shield_health( self.shielddamagetaken, damagemax );
+                self deployed_set_shield_health( self.shielddamagetaken, idamage );
             }
             return 0;
         }
@@ -962,13 +965,13 @@ start_er()
 			{
                 if( distance( self.origin, zombie.origin ) <= 70 )
 				{
-					if(self maps/mp/zombies/_zm_powerups::is_insta_kill_active())
+					if(self maps\mp\zombies\_zm_powerups::is_insta_kill_active())
 					{
 						zombie doDamage(zombie.health + 666, (0, 0, 0));
 					}
                     else
                     {
-                        if(level.round_number < 10 && !self maps/mp/zombies/_zm_powerups::is_insta_kill_active())
+                        if(level.round_number < 10 && !self maps\mp\zombies\_zm_powerups::is_insta_kill_active())
                         {
                             zombie doDamage(zombie.health + 666, (0, 0, 0));
                         }
@@ -979,12 +982,12 @@ start_er()
                     }
 					if(zombie.health <= 0)
 					{
-                        self maps/mp/zombies/_zm_score::add_to_player_score( 100 );
+                        self maps\mp\zombies\_zm_score::add_to_player_score( 100 );
 						self.kills++;
 					} 
 					else 
 					{
-                        self maps/mp/zombies/_zm_score::add_to_player_score( 10 );
+                        self maps\mp\zombies\_zm_score::add_to_player_score( 10 );
                     }
                 } 
             }
@@ -1114,7 +1117,7 @@ LastStand()
     } 
 	else 
 	{
-        self maps/mp/zombies/_zm::last_stand_pistol_swap();
+        self maps\mp\zombies\_zm::last_stand_pistol_swap();
     }
 }
 
@@ -1143,8 +1146,8 @@ ww_points( player )
 {
     for(i = 0; i < 3; i++)
     {
-		self maps/mp/zombies/_zm_utility::set_zombie_run_cycle("walk");
-        player maps/mp/zombies/_zm_score::add_to_player_score( 10 );
+		self maps\mp\zombies\_zm_utility::set_zombie_run_cycle("walk");
+        player maps\mp\zombies\_zm_score::add_to_player_score( 10 );
         PlayFXOnTag(level.effect_WebFX,self,"j_spineupper");
         self doDamage(150, (0, 0, 0));
         if(getdvar( "mapname" ) == "zm_tomb" )
@@ -1396,7 +1399,7 @@ custom_chugabud_save_loadout()
 	while ( isDefined( index ) )
 	{
 		weapon = _a376[ index ];
-		self.loadout.weapons[ index ] = maps/mp/zombies/_zm_weapons::get_player_weapondata( self, weapon );
+		self.loadout.weapons[ index ] = maps\mp\zombies\_zm_weapons::get_player_weapondata( self, weapon );
 		if ( weapon == currentweapon || self.loadout.weapons[ index ][ "alt_name" ] == currentweapon )
 		{
 			self.loadout.current_weapon = index;
@@ -1406,7 +1409,7 @@ custom_chugabud_save_loadout()
 	self.loadout.equipment = self get_player_equipment();
 	if ( isDefined( self.loadout.equipment ) )
 	{
-		self maps/mp/zombies/_zm_equipment::equipment_take( self.loadout.equipment );
+		self maps\mp\zombies\_zm_equipment::equipment_take( self.loadout.equipment );
 	}
 	self.loadout save_weapons_for_chugabud( self );
 	if ( self hasweapon( "claymore_zm" ) )
@@ -1416,7 +1419,7 @@ custom_chugabud_save_loadout()
 	}
 	self.loadout.perks = self custom_save_perks();
 	self chugabud_save_grenades();
-	if ( maps/mp/zombies/_zm_weap_cymbal_monkey::cymbal_monkey_exists() )
+	if ( maps\mp\zombies\_zm_weap_cymbal_monkey::cymbal_monkey_exists() )
 	{
 		self.loadout.zombie_cymbal_monkey_count = self getweaponammoclip( "cymbal_monkey_zm" );
 	}
@@ -1475,7 +1478,7 @@ custom_afterlife_give_loadout()
 	{
 		self giveweapon( self get_player_melee_weapon() );
 	}
-	self maps/mp/zombies/_zm_equipment::equipment_give( self.loadout.equipment );
+	self maps\mp\zombies\_zm_equipment::equipment_give( self.loadout.equipment );
 	if ( isDefined( loadout.hasclaymore ) && loadout.hasclaymore && !self hasweapon( "claymore_zm" ) )
 	{
 		self giveweapon( "claymore_zm" );
@@ -1495,7 +1498,7 @@ custom_afterlife_give_loadout()
 		self setclientfieldtoplayer( "tomahawk_in_use", 1 );
 	}
 	self.score = loadout.score;
-	perk_array = maps/mp/zombies/_zm_perks::get_perk_array( 1 );
+	perk_array = maps\mp\zombies\_zm_perks::get_perk_array( 1 );
 	i = 0;
 	while ( i < perk_array.size )
 	{
@@ -1574,7 +1577,7 @@ custom_tombstone_give()
 			stock = dc.stockcount[ i ];
 			if ( !self hasweapon( weapon ) )
 			{
-				self giveweapon( weapon, 0, self maps/mp/zombies/_zm_weapons::get_pack_a_punch_weapon_options( weapon ) );
+				self giveweapon( weapon, 0, self maps\mp\zombies\_zm_weapons::get_pack_a_punch_weapon_options( weapon ) );
 				self setweaponammoclip( weapon, weaponclipsize( weapon ) );
 				self setweaponammostock( weapon, stock );
 				if ( i == dc.current_weapon )
@@ -1587,7 +1590,7 @@ custom_tombstone_give()
 	}
 	if ( isDefined( dc.hasriotshield ) && dc.hasriotshield )
 	{
-		self maps/mp/zombies/_zm_equipment::equipment_give( "riotshield_zm" );
+		self maps\mp\zombies\_zm_equipment::equipment_give( "riotshield_zm" );
 		if ( isDefined( self.player_shield_reset_health ) )
 		{
 			self [[ self.player_shield_reset_health ]]();
@@ -1633,11 +1636,11 @@ custom_tombstone_give()
 		}
 		self setweaponammoclip( self get_player_lethal_grenade(), dc.grenade + curgrenadecount );
 	}
-	if ( maps/mp/zombies/_zm_weap_cymbal_monkey::cymbal_monkey_exists() && !flag( "solo_game" ) )
+	if ( maps\mp\zombies\_zm_weap_cymbal_monkey::cymbal_monkey_exists() && !flag( "solo_game" ) )
 	{
 		if ( dc.zombie_cymbal_monkey_count )
 		{
-			self maps/mp/zombies/_zm_weap_cymbal_monkey::player_give_cymbal_monkey();
+			self maps\mp\zombies\_zm_weap_cymbal_monkey::player_give_cymbal_monkey();
 			self setweaponammoclip( "cymbal_monkey_zm", dc.zombie_cymbal_monkey_count );
 		}
 	}
@@ -1680,7 +1683,7 @@ custom_afterlife_save_loadout()
 	self.loadout.equipment = self get_player_equipment();
 	if ( isDefined( self.loadout.equipment ) )
 	{
-		self maps/mp/zombies/_zm_equipment::equipment_take( self.loadout.equipment );
+		self maps\mp\zombies\_zm_equipment::equipment_take( self.loadout.equipment );
 	}
 	if ( self hasweapon( "claymore_zm" ) )
 	{
@@ -1757,7 +1760,7 @@ custom_tombstone_laststand()
 	{
 		dc.grenade = 0;
 	}
-	if ( maps/mp/zombies/_zm_weap_cymbal_monkey::cymbal_monkey_exists() )
+	if ( maps\mp\zombies\_zm_weap_cymbal_monkey::cymbal_monkey_exists() )
 	{
 		dc.zombie_cymbal_monkey_count = self getweaponammoclip( "cymbal_monkey_zm" );
 	}
@@ -1850,7 +1853,7 @@ tombstone_grab()
 
 solo_tombstone_removal()
 {
-	notify( "tombstone_on" );
+	level notify( "tombstone_on" );
 }
 
 turn_tombstone_on()
@@ -2141,7 +2144,7 @@ save_loadout()
 	self.current_loadout.equipment = self get_player_equipment();
 
 	if ( isDefined( self.current_loadout.equipment ) )
-		self maps/mp/zombies/_zm_equipment::equipment_take( self.current_loadout.equipment );
+		self maps\mp\zombies\_zm_equipment::equipment_take( self.current_loadout.equipment );
 
     if ( maps\mp\zombies\_zm_weap_cymbal_monkey::cymbal_monkey_exists() )
         self.current_loadout.zombie_cymbal_monkey_count = self getweaponammoclip( "cymbal_monkey_zm" );
@@ -2239,7 +2242,7 @@ give_loadout()
 	{
 		self giveweapon( self get_player_melee_weapon() );
 	}
-	self maps/mp/zombies/_zm_equipment::equipment_give( self.current_loadout.equipment );
+	self maps\mp\zombies\_zm_equipment::equipment_give( self.current_loadout.equipment );
 	if ( isDefined( loadout.hasclaymore ) && loadout.hasclaymore && !self hasweapon( "claymore_zm" ) )
 	{
 		self giveweapon( "claymore_zm" );
@@ -2264,7 +2267,7 @@ give_loadout()
 		self setclientfieldtoplayer( "tomahawk_in_use", 1 );
 	}
 	self.score = loadout.score;
-	perk_array = maps/mp/zombies/_zm_perks::get_perk_array( 1 );
+	perk_array = maps\mp\zombies\_zm_perks::get_perk_array( 1 );
 	i = 0;
 	while ( i < perk_array.size )
 	{
@@ -2387,7 +2390,7 @@ grab_custom_tombstone(hint)
 				if ( isDefined( self.player ) && players[ i ] == self.player )
 				{
                     istombstonepowered = 1;
-					if ( istombstonepowered && !players[ i ] maps/mp/zombies/_zm_laststand::player_is_in_laststand() )
+					if ( istombstonepowered && !players[ i ] maps\mp\zombies\_zm_laststand::player_is_in_laststand() )
 					{
 						dist = distance( players[ i ].origin, self.origin );
 						if ( dist < 64 )
